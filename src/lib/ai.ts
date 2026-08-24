@@ -1,0 +1,77 @@
+import Groq from "groq-sdk";
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+export interface ExtractedEvent {
+  isEvent: boolean;
+  title?: string;
+  description?: string;
+  type?: 'deadline' | 'meeting' | 'schedule';
+  startTime?: string; // ISO 8601 string
+  endTime?: string;   // ISO 8601 string
+  confidence?: number;
+}
+
+export async function analyzeEmailForEvents(
+  subject: string, 
+  sender: string, 
+  bodyText: string, 
+  receivedAt: Date
+): Promise<ExtractedEvent | null> {
+  const prompt = `
+You are an intelligent email parsing assistant. Your job is to extract events, meetings, deadlines, and schedules from the provided email metadata and full body text.
+
+Email Metadata:
+- Subject: ${subject}
+- Sender: ${sender}
+- Received Date: ${receivedAt.toISOString()}
+
+Email Body Content:
+${bodyText}
+
+Instructions:
+Determine if this email announces a schedule, deadline, meeting, or selection process. 
+Even if the exact date or time is NOT explicitly mentioned in the text (e.g., it might be in an attachment or implied), you MUST still extract it as an event.
+If it is clearly just marketing garbage, set "isEvent" to false.
+If it is a relevant event/schedule/deadline, set "isEvent" to true, and extract the following:
+- "title": A short, clear title for the event (max 50 chars).
+- "description": A brief context or description.
+- "type": strictly one of: "deadline", "meeting", "schedule".
+- "startTime": The start time of the event as a strict UTC ISO-8601 string (e.g. 2026-08-25T15:00:00Z). If the email contains a specific date/time, use it. IF NO SPECIFIC DATE/TIME IS MENTIONED, you MUST fallback and use the exact "Received Date" as the startTime.
+- "endTime": (Optional) The end time of the event as a strict UTC ISO-8601 string (e.g. 2026-08-25T16:00:00Z).
+- "confidence": A number from 0.0 to 1.0 indicating your confidence in this extraction.
+
+Return ONLY a valid JSON object matching this schema. Do not include markdown blocks or any other text.
+`;
+
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      const response = await groq.chat.completions.create({
+        model: "openai/gpt-oss-20b",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+      });
+
+      const resultText = response.choices[0]?.message?.content;
+      if (!resultText) return null;
+      
+      const parsed = JSON.parse(resultText) as ExtractedEvent;
+      
+      if (parsed.isEvent) {
+        return parsed;
+      }
+      
+      return null;
+    } catch (error) {
+      retries--;
+      if (retries === 0) {
+        console.error("Error analyzing email with Groq (Retries exhausted):", error);
+        return null;
+      }
+      // Exponential backoff: wait 1s, then 2s
+      await new Promise(resolve => setTimeout(resolve, (3 - retries) * 1000));
+    }
+  }
+  return null;
+}

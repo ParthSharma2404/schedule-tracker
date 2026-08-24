@@ -1,0 +1,32 @@
+import { NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { prisma } from "./prisma";
+
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma) as any,
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || "missing-client-id",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "missing-client-secret",
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+          scope: "openid email profile https://www.googleapis.com/auth/gmail.readonly"
+        }
+      }
+    }),
+  ],
+  callbacks: {
+    async session({ session, user }) {
+      if (session.user) {
+        // Use user object from database (Prisma adapter behavior)
+        session.user.id = user.id;
+      }
+      return session;
+    }
+  },
+  debug: true
+};
