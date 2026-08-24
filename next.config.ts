@@ -5,7 +5,6 @@ const withPWA = withPWAInit({
   dest: "public",
   disable: false, // Keep enabled so desktop install works in dev mode
   register: true,
-  skipWaiting: true,
 });
 
 const nextConfig: NextConfig = {
