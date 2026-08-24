@@ -28,7 +28,6 @@ export default function SyncButton() {
       >
         {syncing ? "Syncing..." : "Force Sync Now"}
       </button>
-      {result && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{result}</span>}
     </div>
   );
 }

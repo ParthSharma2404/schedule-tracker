@@ -9,6 +9,7 @@ const SYNC_INTERVAL_MS = 5 * 60 * 1000; // Auto-sync every 5 minutes
 export default function AutoSync() {
   const { data: session } = useSession();
   const { startSync } = useSync();
+  const hasSynced = useRef(false);
 
   useEffect(() => {
     if (!session?.user) return;
