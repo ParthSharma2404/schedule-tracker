@@ -8,9 +8,10 @@ export default function GlobalSyncProgress() {
   const { isSyncing, totalToProcess, processedCount } = useSync();
   const { data: session } = useSession();
 
-  if (!session?.user || !isSyncing || totalToProcess === 0) return null;
+  if (!session?.user || !isSyncing) return null;
 
-  const progress = Math.min(100, Math.max(0, (processedCount / totalToProcess) * 100));
+  const isFetching = totalToProcess === 0;
+  const progress = isFetching ? 0 : Math.min(100, Math.max(0, (processedCount / totalToProcess) * 100));
 
   return (
     <div style={{
@@ -43,11 +44,15 @@ export default function GlobalSyncProgress() {
             <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
             <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
           </svg>
-          <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>Scanning Emails with AI</span>
+          <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>
+            {isFetching ? "Connecting to Gmail..." : "Scanning Emails with AI"}
+          </span>
         </div>
-        <span style={{ fontSize: '0.8rem', color: '#a1a1aa' }}>
-          {processedCount} / {totalToProcess}
-        </span>
+        {!isFetching && (
+          <span style={{ fontSize: '0.8rem', color: '#a1a1aa' }}>
+            {processedCount} / {totalToProcess}
+          </span>
+        )}
       </div>
       
       {/* Progress Bar Track */}
@@ -55,8 +60,8 @@ export default function GlobalSyncProgress() {
         {/* Progress Fill */}
         <div style={{ 
           height: '100%', 
-          backgroundColor: '#3b82f6', 
-          width: `${progress}%`,
+          backgroundColor: isFetching ? 'transparent' : '#3b82f6', 
+          width: isFetching ? '100%' : `${progress}%`,
           transition: 'width 0.4s ease-out'
         }} />
       </div>

@@ -23,8 +23,8 @@ export async function POST() {
     });
 
     // 1. Fetch recent emails from Gmail API incrementally
-    // If it's a fresh sync (lastSyncedAt is null), fetch up to 100 emails to restore history
-    const maxFetch = user?.lastSyncedAt ? 50 : 100;
+    // If it's a fresh sync (lastSyncedAt is null), fetch up to 20 emails to restore history
+    const maxFetch = user?.lastSyncedAt ? 20 : 20;
     const recentEmails = await fetchRecentEmails(userId, user?.lastSyncedAt, maxFetch);
 
     let newEmailsProcessed = 0;

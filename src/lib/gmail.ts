@@ -87,7 +87,7 @@ function extractPlainText(payload: any): string {
   return "";
 }
 
-export async function fetchRecentEmails(userId: string, lastSyncedAt?: Date | null, maxResults = 50) {
+export async function fetchRecentEmails(userId: string, lastSyncedAt?: Date | null, maxResults = 20) {
   const gmail = await getGmailClient(userId);
 
   // Highly targeted Gmail search query to filter out marketing garbage
