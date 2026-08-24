@@ -7,14 +7,15 @@ import { redirect } from "next/navigation";
 export default async function AddEventPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     redirect("/");
   }
 
-  const emailId = searchParams.emailId as string | undefined;
+  const resolvedSearchParams = await searchParams;
+  const emailId = resolvedSearchParams.emailId as string | undefined;
   let email = null;
 
   if (emailId) {
