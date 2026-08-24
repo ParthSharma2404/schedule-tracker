@@ -37,7 +37,7 @@ If it is a relevant event/schedule/deadline, set "isEvent" to true, and extract 
 - "title": A short, clear title for the event (max 50 chars).
 - "description": A brief context or description.
 - "type": strictly one of: "deadline", "meeting", "schedule".
-- "startTime": The start time of the event as a strict UTC ISO-8601 string (e.g. 2026-08-25T15:00:00Z). If the email contains a specific date/time, use it. IF NO SPECIFIC DATE/TIME IS MENTIONED, you MUST fallback and use the exact "Received Date" as the startTime.
+- "startTime": The start time of the event as a strict UTC ISO-8601 string (e.g. 2026-08-25T15:00:00Z). CRITICAL: You MUST thoroughly scan the Email Body for any mention of the event's actual date and time (e.g., "24th August", "tomorrow at 5pm"). If you find an event date in the body, you MUST use that date to generate the ISO string. DO NOT use the "Received Date" as the startTime unless there is absolutely zero mention of any future date/time in the email.
 - "endTime": (Optional) The end time of the event as a strict UTC ISO-8601 string (e.g. 2026-08-25T16:00:00Z).
 - "confidence": A number from 0.0 to 1.0 indicating your confidence in this extraction.
 
