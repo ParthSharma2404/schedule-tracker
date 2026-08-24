@@ -2,29 +2,20 @@
 
 import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useSync } from "./SyncProvider";
 
 const SYNC_INTERVAL_MS = 5 * 60 * 1000; // Auto-sync every 5 minutes
 
 export default function AutoSync() {
   const { data: session } = useSession();
-  const hasSynced = useRef(false);
+  const { startSync } = useSync();
 
   useEffect(() => {
     if (!session?.user) return;
 
     const runSync = async () => {
-      try {
-        console.log("[AutoSync] Running background sync...");
-        const res = await fetch("/api/emails/sync", { method: "POST" });
-        const data = await res.json();
-        if (res.ok) {
-          console.log("[AutoSync]", data.message);
-        } else {
-          console.warn("[AutoSync] Error:", data.error);
-        }
-      } catch (err) {
-        console.warn("[AutoSync] Network error:", err);
-      }
+      console.log("[AutoSync] Triggering background sync via context...");
+      await startSync();
     };
 
     // Run once on first load (only if not already synced this session)

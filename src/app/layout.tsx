@@ -3,6 +3,8 @@ import Sidebar from "@/components/Sidebar";
 import AuthButton from "@/components/AuthButton";
 import AutoSync from "@/components/AutoSync";
 import Providers from "@/components/Providers";
+import { SyncProvider } from "@/components/SyncProvider";
+import GlobalSyncProgress from "@/components/GlobalSyncProgress";
 import "./globals.css";
 import styles from "./layout.module.css";
 import { getServerSession } from "next-auth/next";
@@ -30,7 +32,9 @@ export default async function RootLayout({
     <html lang="en">
       <body suppressHydrationWarning>
         <Providers>
-          <AutoSync />
+          <SyncProvider>
+            <AutoSync />
+            <GlobalSyncProgress />
           
           {!session?.user ? (
             /* Full Screen Landing Page Layout */
@@ -62,6 +66,7 @@ export default async function RootLayout({
             </div>
           )}
           
+          </SyncProvider>
         </Providers>
       </body>
     </html>

@@ -54,46 +54,13 @@ export async function POST() {
 
     console.log(`[SYNC] Fetched ${recentEmails.length} emails from Gmail, ${newEmailsProcessed} new.`);
 
-    // 3. Re-process ALL emails that have 0 events (handles broken AI model recovery)
-    const unprocessedEmails = await prisma.email.findMany({
+    // 3. Count how many emails are still unprocessed
+    const unprocessedCount = await prisma.email.count({
       where: {
         userId: userId,
-        events: { none: {} }
-      },
-      orderBy: { receivedAt: 'desc' }
-    });
-
-    console.log(`[SYNC] Found ${unprocessedEmails.length} emails with 0 events — processing with AI...`);
-
-    for (const dbEmail of unprocessedEmails) {
-      console.log(`[SYNC] Processing: "${dbEmail.subject}"`);
-      
-      const extracted = await analyzeEmailForEvents(
-        dbEmail.subject,
-        dbEmail.sender,
-        dbEmail.bodySnippet || "",
-        dbEmail.receivedAt
-      );
-
-      console.log(`[SYNC] AI result:`, JSON.stringify(extracted));
-
-      if (extracted && extracted.isEvent && extracted.title && extracted.startTime) {
-        await prisma.event.create({
-          data: {
-            title: extracted.title,
-            description: extracted.description,
-            type: extracted.type || "schedule",
-            startTime: new Date(extracted.startTime),
-            endTime: extracted.endTime ? new Date(extracted.endTime) : null,
-            confidence: extracted.confidence || 1.0,
-            userId: userId,
-            sourceEmailId: dbEmail.id
-          }
-        });
-        newEventsFound++;
-        console.log(`[SYNC] ✅ Event saved: "${extracted.title}" on ${extracted.startTime}`);
+        isProcessed: false
       }
-    }
+    });
 
     // 4. Update user's lastSyncedAt to now
     await prisma.user.update({
@@ -103,11 +70,13 @@ export async function POST() {
 
     return NextResponse.json({ 
       success: true, 
-      message: `Processed ${newEmailsProcessed} new emails. Found ${newEventsFound} new events.` 
+      newEmailsFetched: newEmailsProcessed,
+      unprocessedCount: unprocessedCount,
+      message: `Fetched ${newEmailsProcessed} new emails. ${unprocessedCount} emails waiting for AI scan.` 
     });
 
   } catch (error: any) {
     console.error("Sync error:", error);
-    return NextResponse.json({ error: error.message || "Failed to sync emails" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Failed to fetch emails" }, { status: 500 });
   }
 }

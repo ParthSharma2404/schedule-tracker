@@ -1,30 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useSync } from "./SyncProvider";
 
 export default function SyncButton() {
-  const [syncing, setSyncing] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const { isSyncing: syncing, startSync } = useSync();
 
   const handleSync = async () => {
-    setSyncing(true);
-    setResult(null);
-    try {
-      const res = await fetch("/api/emails/sync", { method: "POST" });
-      const data = await res.json();
-      
-      if (res.ok) {
-        setResult(data.message);
-        // In a real app we'd refresh the page/cache here
-        setTimeout(() => window.location.reload(), 2000);
-      } else {
-        setResult("Error: " + data.error);
-      }
-    } catch (e: any) {
-      setResult("Error: " + e.message);
-    } finally {
-      setSyncing(false);
-    }
+    await startSync();
   };
 
   return (
