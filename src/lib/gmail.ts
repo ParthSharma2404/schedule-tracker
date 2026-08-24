@@ -132,5 +132,5 @@ export async function fetchRecentEmails(userId: string, lastSyncedAt?: Date | nu
     })
   );
 
-  return detailedMessages.filter(Boolean);
+  return detailedMessages.filter((msg): msg is NonNullable<typeof msg> => msg !== null);
 }

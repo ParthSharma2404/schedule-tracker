@@ -15,7 +15,7 @@ export default async function EmailsPage() {
     );
   }
 
-  let emails = [];
+  let emails: any[] = [];
   let error = null;
 
   try {
