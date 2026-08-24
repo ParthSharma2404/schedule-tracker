@@ -64,6 +64,7 @@ model Email {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   events      Event[]  // One email can have multiple events extracted from it
+  hasAttachments Boolean @default(false)
   createdAt   DateTime @default(now())
 }
 

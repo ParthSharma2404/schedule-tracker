@@ -49,6 +49,18 @@ export async function getGmailClient(userId: string) {
   const gmail = google.gmail({ version: "v1", auth: oauth2Client });
   return gmail;
 }
+function checkHasAttachments(payload: any): boolean {
+  if (!payload) return false;
+  if (payload.filename && payload.filename.length > 0) {
+    return true;
+  }
+  if (payload.parts) {
+    for (const part of payload.parts) {
+      if (checkHasAttachments(part)) return true;
+    }
+  }
+  return false;
+}
 
 function extractPlainText(payload: any): string {
   if (!payload) return "";
@@ -112,6 +124,7 @@ export async function fetchRecentEmails(userId: string, lastSyncedAt?: Date | nu
       const date = dateStr ? new Date(dateStr) : new Date();
 
       let bodyText = extractPlainText(payload);
+      const hasAttachments = checkHasAttachments(payload);
       
       // Fallback to snippet if body extraction fails
       if (!bodyText || bodyText.trim() === "") {
@@ -127,7 +140,8 @@ export async function fetchRecentEmails(userId: string, lastSyncedAt?: Date | nu
         bodyText,
         subject,
         from,
-        date
+        date,
+        hasAttachments
       };
     })
   );

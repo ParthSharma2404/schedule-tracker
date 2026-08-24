@@ -35,7 +35,7 @@ Even if the exact date or time is NOT explicitly mentioned in the text (e.g., it
 If it is clearly just marketing garbage, set "isEvent" to false.
 If it is a relevant event/schedule/deadline, set "isEvent" to true, and extract the following:
 - "title": A short, clear title for the event (max 50 chars).
-- "description": A brief context or description.
+- "description": A comprehensive summary showcasing the main crux of the email, including any important context, instructions, or prerequisites for the event. Write in clear, complete sentences.
 - "type": strictly one of: "deadline", "meeting", "schedule".
 - "startTime": The start time of the event as a strict UTC ISO-8601 string (e.g. 2026-08-25T15:00:00Z). CRITICAL: You MUST thoroughly scan the Email Body for any mention of the event's actual date and time (e.g., "24th August", "tomorrow at 5pm"). If you find an event date in the body, you MUST use that date to generate the ISO string. DO NOT use the "Received Date" as the startTime unless there is absolutely zero mention of any future date/time in the email.
 - "endTime": (Optional) The end time of the event as a strict UTC ISO-8601 string (e.g. 2026-08-25T16:00:00Z).

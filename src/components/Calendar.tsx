@@ -34,6 +34,7 @@ export type CalendarEvent = {
   gmailMessageId: string | null;
   sourceSubject: string | null;
   sourceSender: string | null;
+  hasAttachments: boolean;
 };
 
 function formatTime(iso: string) {
@@ -100,7 +101,7 @@ function EventModal({ event, onClose }: { event: CalendarEvent; onClose: () => v
         {event.description && (
           <div className={styles.modalSection}>
             <h4 className={styles.modalSectionTitle}>Description</h4>
-            <p className={styles.modalDescription}>{event.description}</p>
+            <p className={styles.modalDescription} style={{ whiteSpace: 'pre-wrap' }}>{event.description}</p>
           </div>
         )}
 
@@ -109,7 +110,15 @@ function EventModal({ event, onClose }: { event: CalendarEvent; onClose: () => v
           <div className={styles.modalSection}>
             <h4 className={styles.modalSectionTitle}>Source Email</h4>
             <div className={styles.modalSourceCard}>
-              <div className={styles.modalSourceSubject}>{event.sourceSubject}</div>
+              <div className={styles.modalSourceSubject}>
+                {event.sourceSubject}
+                {event.hasAttachments && (
+                  <span style={{ marginLeft: '8px', padding: '2px 6px', background: '#374151', borderRadius: '4px', fontSize: '0.75rem', color: '#9ca3af', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                    Has Attachments
+                  </span>
+                )}
+              </div>
               {event.sourceSender && <div className={styles.modalSourceSender}>{event.sourceSender}</div>}
             </div>
           </div>

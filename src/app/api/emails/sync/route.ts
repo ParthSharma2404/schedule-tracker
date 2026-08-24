@@ -42,9 +42,10 @@ export async function POST() {
             messageId: email.id,
             subject: email.subject,
             sender: email.from,
-            bodySnippet: email.snippet,
+            bodySnippet: email.bodyText, // Save full body for AI to scan
             receivedAt: email.date,
             userId: userId,
+            hasAttachments: email.hasAttachments,
           }
         });
         newEmailsProcessed++;

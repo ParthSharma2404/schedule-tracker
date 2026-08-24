@@ -12,7 +12,7 @@ export default async function CalendarPage() {
       where: { userId: session.user.id },
       include: {
         sourceEmail: {
-          select: { messageId: true, subject: true, sender: true }
+          select: { messageId: true, subject: true, sender: true, hasAttachments: true }
         }
       },
       orderBy: { startTime: 'asc' }
@@ -34,6 +34,7 @@ export default async function CalendarPage() {
     gmailMessageId: e.sourceEmail?.messageId || null,
     sourceSubject: e.sourceEmail?.subject || null,
     sourceSender: e.sourceEmail?.sender || null,
+    hasAttachments: e.sourceEmail?.hasAttachments || false,
   }));
 
   return (
