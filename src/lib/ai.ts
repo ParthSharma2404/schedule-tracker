@@ -48,7 +48,7 @@ Return ONLY a valid JSON object matching this schema. Do not include markdown bl
   while (retries > 0) {
     try {
       const response = await groq.chat.completions.create({
-        model: "openai/gpt-oss-20b",
+        model: "openai/gpt-oss-120b",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       });

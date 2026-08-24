@@ -5,6 +5,9 @@ import { fetchRecentEmails } from "@/lib/gmail";
 import { analyzeEmailForEvents } from "@/lib/ai";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 export async function POST() {
   try {
     const session = await getServerSession(authOptions);
@@ -20,7 +23,9 @@ export async function POST() {
     });
 
     // 1. Fetch recent emails from Gmail API incrementally
-    const recentEmails = await fetchRecentEmails(userId, user?.lastSyncedAt, 50);
+    // If it's a fresh sync (lastSyncedAt is null), fetch up to 100 emails to restore history
+    const maxFetch = user?.lastSyncedAt ? 50 : 100;
+    const recentEmails = await fetchRecentEmails(userId, user?.lastSyncedAt, maxFetch);
 
     let newEmailsProcessed = 0;
     let newEventsFound = 0;
