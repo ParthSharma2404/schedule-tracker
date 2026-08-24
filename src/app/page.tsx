@@ -42,6 +42,12 @@ export default async function Home() {
     orderBy: { startTime: 'asc' }
   });
 
+  const failedEmails = await prisma.email.findMany({
+    where: { userId, processingError: { not: null } },
+    orderBy: { receivedAt: 'desc' },
+    take: 5
+  });
+
   return (
     <div className={styles.container}>
       <h1 className={styles.greeting}>
@@ -89,6 +95,37 @@ export default async function Home() {
           ))
         )}
       </div>
+
+      {failedEmails.length > 0 && (
+        <>
+          <div className={styles.sectionHeader} style={{ marginTop: '2.5rem' }}>
+            <h3 className={styles.sectionTitle} style={{ color: '#ef4444' }}>Action Required: Failed to Scan</h3>
+          </div>
+          <div className={styles.upcomingList}>
+            {failedEmails.map((email: any) => (
+              <div key={email.id} className={styles.eventItem} style={{ borderLeft: '3px solid #ef4444', paddingLeft: '1rem' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{email.subject}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>From: {email.sender}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '4px' }}>Error: {email.processingError}</div>
+                </div>
+                <Link href={`/calendar/add?emailId=${email.id}`} style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#ef4444',
+                  color: '#fff',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap'
+                }}>
+                  Add Manually
+                </Link>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

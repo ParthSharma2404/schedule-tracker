@@ -66,6 +66,7 @@ model Email {
   events      Event[]  // One email can have multiple events extracted from it
   hasAttachments Boolean @default(false)
   isProcessed Boolean @default(false)
+  processingError String? // To notify user of failure
   createdAt   DateTime @default(now())
 }
 

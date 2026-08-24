@@ -40,22 +40,45 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       }
 
       // 2. Poll the processing route in chunks until done (Phase 2)
-      while (remaining > 0) {
-        const processRes = await fetch("/api/emails/process", { method: "POST" });
-        const processData = await processRes.json();
-        
-        if (!processRes.ok) throw new Error(processData.error);
-        
-        remaining = processData.remaining;
-        
-        // If the backend says 0 remaining but we haven't updated total, cap it
-        setProcessedCount(Math.min(total, total - remaining));
+      let consecutiveErrors = 0;
+      let lastRemaining = remaining;
 
-        // Optional: slight delay between chunks to be nice to the server
-        await new Promise(resolve => setTimeout(resolve, 500));
+      while (remaining > 0) {
+        try {
+          const processRes = await fetch("/api/emails/process", { method: "POST" });
+          
+          if (!processRes.ok) {
+            throw new Error(`HTTP Error: ${processRes.status}`);
+          }
+
+          const processData = await processRes.json();
+          
+          if (processData.remaining === lastRemaining && processData.processed === 0) {
+             // No progress made this chunk, but backend returned success
+             // (Should not happen normally, but safe guard)
+          }
+          lastRemaining = processData.remaining;
+          remaining = processData.remaining;
+          
+          // If the backend says 0 remaining but we haven't updated total, cap it
+          setProcessedCount(Math.min(total, total - remaining));
+          consecutiveErrors = 0; // reset on success
+
+          // Optional: slight delay between chunks to be nice to the server
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (err) {
+          console.error("Chunk processing error:", err);
+          consecutiveErrors++;
+          if (consecutiveErrors >= 3) {
+             console.error("Aborting sync due to multiple chunk failures.");
+             break; // Gracefully stop sync, showing what was processed so far
+          }
+          // Wait longer before retrying to give server time to recover
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
       }
       
-      // Finished all chunks! 
+      // Finished all chunks (or aborted gracefully)!
       // Refresh page data if on calendar/dashboard so new events show up
       setTimeout(() => window.location.reload(), 1000);
 

@@ -41,35 +41,59 @@ export async function POST() {
     for (const dbEmail of unprocessedEmails) {
       console.log(`[PROCESS] AI Scanning: "${dbEmail.subject}"`);
       
-      const extracted = await analyzeEmailForEvents(
-        dbEmail.subject,
-        dbEmail.sender,
-        dbEmail.bodySnippet || "",
-        dbEmail.receivedAt
-      );
+      try {
+        const extracted = await analyzeEmailForEvents(
+          dbEmail.subject,
+          dbEmail.sender,
+          dbEmail.bodySnippet || "",
+          dbEmail.receivedAt
+        );
 
-      if (extracted && extracted.isEvent && extracted.title && extracted.startTime) {
-        await prisma.event.create({
-          data: {
-            title: extracted.title,
-            description: extracted.description,
-            type: extracted.type || "schedule",
-            startTime: new Date(extracted.startTime),
-            endTime: extracted.endTime ? new Date(extracted.endTime) : null,
-            confidence: extracted.confidence || 1.0,
-            userId: userId,
-            sourceEmailId: dbEmail.id
+        if (extracted && extracted.isEvent && extracted.title && extracted.startTime) {
+          const startTime = new Date(extracted.startTime);
+          if (isNaN(startTime.getTime())) {
+            throw new Error(`Invalid start time returned by AI: ${extracted.startTime}`);
           }
-        });
-        newEventsFound++;
-        console.log(`[PROCESS] ✅ Event saved: "${extracted.title}"`);
-      }
+          
+          let endTime = null;
+          if (extracted.endTime) {
+            endTime = new Date(extracted.endTime);
+            if (isNaN(endTime.getTime())) {
+              endTime = null; // Fallback instead of failing
+            }
+          }
 
-      // Mark this email as processed regardless of whether an event was found
-      await prisma.email.update({
-        where: { id: dbEmail.id },
-        data: { isProcessed: true }
-      });
+          await prisma.event.create({
+            data: {
+              title: extracted.title,
+              description: extracted.description,
+              type: extracted.type || "schedule",
+              startTime: startTime,
+              endTime: endTime,
+              confidence: extracted.confidence || 1.0,
+              userId: userId,
+              sourceEmailId: dbEmail.id
+            }
+          });
+          newEventsFound++;
+          console.log(`[PROCESS] ✅ Event saved: "${extracted.title}"`);
+        }
+
+        // Mark this email as processed successfully
+        await prisma.email.update({
+          where: { id: dbEmail.id },
+          data: { isProcessed: true, processingError: null }
+        });
+
+      } catch (err: any) {
+        console.error(`[PROCESS] Error processing email ${dbEmail.id}:`, err);
+        
+        // Mark as processed but save the error so it doesn't block the queue
+        await prisma.email.update({
+          where: { id: dbEmail.id },
+          data: { isProcessed: true, processingError: err.message || "Unknown error occurred" }
+        });
+      }
     }
 
     // 3. Count how many are still left after this chunk
