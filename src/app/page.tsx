@@ -69,63 +69,75 @@ export default async function Home() {
         </div>
       </div>
 
-      <div className={styles.sectionHeader}>
-        <h3 className={styles.sectionTitle}>High Priority Today</h3>
-        <Link href="/calendar" className={styles.viewAll}>View calendar</Link>
-      </div>
-      
-      <div className={styles.upcomingList}>
-        {todayEvents.length === 0 ? (
-          <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Nothing scheduled for today. You are all caught up.</div>
-        ) : (
-          todayEvents.map((evt: any) => (
-            <div key={evt.id} className={styles.eventItem}>
-              <div className={styles.eventIndicator} style={{
-                backgroundColor: evt.type === 'deadline' ? 'var(--color-deadline)' : 
-                                evt.type === 'meeting' ? 'var(--color-meeting)' : 'var(--color-schedule)'
-              }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)' }}>{evt.title}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{evt.type.charAt(0).toUpperCase() + evt.type.slice(1)}</div>
-              </div>
-              <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                {evt.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {failedEmails.length > 0 && (
-        <>
-          <div className={styles.sectionHeader} style={{ marginTop: '2.5rem' }}>
-            <h3 className={styles.sectionTitle} style={{ color: '#ef4444' }}>Action Required: Failed to Scan</h3>
+      <div className={styles.dashboardContent}>
+        
+        {/* Left Column: Timeline */}
+        <div>
+          <div className={styles.sectionHeader}>
+            <h3 className={styles.sectionTitle}>High Priority Today</h3>
+            <Link href="/calendar" className={styles.viewAll}>View calendar</Link>
           </div>
-          <div className={styles.upcomingList}>
-            {failedEmails.map((email: any) => (
-              <div key={email.id} className={styles.eventItem} style={{ borderLeft: '3px solid #ef4444', paddingLeft: '1rem' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{email.subject}</div>
+          
+          <div className={styles.timelineContainer}>
+            {todayEvents.length > 0 && <div className={styles.timelineTrack} />}
+            
+            {todayEvents.length === 0 ? (
+              <div className={styles.emptyState}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginBottom: '1rem', opacity: 0.5 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div style={{ fontWeight: 500, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Schedule Clear</div>
+                <div style={{ fontSize: '0.875rem' }}>You are all caught up for today.</div>
+              </div>
+            ) : (
+              todayEvents.map((evt: any, idx: number) => {
+                const dotClass = evt.type === 'deadline' ? styles.dotDeadline : 
+                                evt.type === 'meeting' ? styles.dotMeeting : styles.dotSchedule;
+                return (
+                  <div key={evt.id} className={styles.timelineEvent} style={{ animationDelay: `${idx * 100}ms` }}>
+                    <div className={`${styles.timelineDot} ${dotClass}`} />
+                    <div className={styles.eventInfo}>
+                      <div className={styles.eventTitle}>{evt.title}</div>
+                      <div className={styles.eventContext}>{evt.type.charAt(0).toUpperCase() + evt.type.slice(1)}</div>
+                    </div>
+                    <div className={styles.eventTime}>
+                      {evt.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Insights & Actions */}
+        <div>
+          <div className={styles.sectionHeader}>
+            <h3 className={styles.sectionTitle}>Insights & Actions</h3>
+          </div>
+          
+          <div className={styles.sidebarList}>
+            {failedEmails.length === 0 ? (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', padding: '1.25rem', backgroundColor: 'var(--glass-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', textAlign: 'center' }}>
+                No actions required. System is operating normally.
+              </div>
+            ) : (
+              failedEmails.map((email: any, idx: number) => (
+                <div key={email.id} className={styles.sidebarCard} style={{ animationDelay: `${idx * 100}ms` }}>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {email.subject}
+                  </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>From: {email.sender}</div>
                   <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '4px' }}>Error: {email.processingError}</div>
+                  <Link href={`/calendar/add?emailId=${email.id}`} className={styles.actionBtn}>
+                    Resolve Manually
+                  </Link>
                 </div>
-                <Link href={`/calendar/add?emailId=${email.id}`} style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#ef4444',
-                  color: '#fff',
-                  borderRadius: '6px',
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
-                  textDecoration: 'none',
-                  whiteSpace: 'nowrap'
-                }}>
-                  Add Manually
-                </Link>
-              </div>
-            ))}
+              ))
+            )}
           </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
