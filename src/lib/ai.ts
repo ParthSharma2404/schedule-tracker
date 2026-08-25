@@ -1,6 +1,6 @@
-import Groq from "groq-sdk";
+import { GoogleGenAI } from "@google/genai";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export interface ExtractedEvent {
   isEvent: boolean;
@@ -47,13 +47,15 @@ Return ONLY a valid JSON object matching this schema. Do not include markdown bl
   let retries = 3;
   while (retries > 0) {
     try {
-      const response = await groq.chat.completions.create({
-        model: "openai/gpt-oss-120b",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+        }
       });
 
-      const resultText = response.choices[0]?.message?.content;
+      const resultText = typeof response.text === 'function' ? response.text() : response.text;
       if (!resultText) return null;
       
       const parsed = JSON.parse(resultText) as ExtractedEvent;
@@ -66,7 +68,7 @@ Return ONLY a valid JSON object matching this schema. Do not include markdown bl
     } catch (error) {
       retries--;
       if (retries === 0) {
-        console.error("Error analyzing email with Groq (Retries exhausted):", error);
+        console.error("Error analyzing email with Gemini (Retries exhausted):", error);
         return null;
       }
       // Exponential backoff: wait 1s, then 2s
