@@ -55,7 +55,7 @@ Return ONLY a valid JSON object matching this schema. Do not include markdown bl
         }
       });
 
-      const resultText = typeof response.text === 'function' ? response.text() : response.text;
+      const resultText = response.text;
       if (!resultText) return null;
       
       const parsed = JSON.parse(resultText) as ExtractedEvent;
